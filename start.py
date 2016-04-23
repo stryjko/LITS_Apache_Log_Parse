@@ -4,6 +4,8 @@
 import mysql.connector
 from mysql.connector import Error
 import parse_error_apache
+import sys
+from os import system
 
 
 class ApacheDB(object):
@@ -16,6 +18,28 @@ class ApacheDB(object):
                              'database':'apache_log'}
         self.apache_conn = mysql.connector.connect(**self.mysql_config)
         self.apache_cur = self.apache_conn.cursor()
+
+    def start_program(self):
+        system('clear')
+        print """ --- Apache logs parser --- \n
+1. Add error log to DB
+2. Add access log to DB
+3. View error log
+4. View access log\n
+9. Exit"""
+
+        choice = str(raw_input('Enter your choice: '))
+
+        if choice == '1':
+            self.give_error_data()
+        elif choice == '2':
+            self.give_access_data()
+        elif choice == '3':
+            pass
+        elif choice == '4':
+            pass
+        elif choice == '9':
+            sys.exit()
 
         
     def give_error_data(self):
@@ -30,7 +54,6 @@ class ApacheDB(object):
     def insert_error_lst(self, data):
 
         for item in data:
-            #self.insert_len = ', '.join(['%s'] * len(item))
             dt = item['date']
             msg_t = item['message_type']
             ip = item['ip']
@@ -50,11 +73,13 @@ class ApacheDB(object):
             
         self.apache_cur.close()
         self.apache_conn.close()
+
+    def insert_access_lst(self, data):
+        pass
             
 
 
 if __name__ == '__main__':
     start = ApacheDB()
-    start.give_error_data()
-    #str(raw_input('1.- Error log to db 2.- Acces log to db'
-    #              '3.- Show error_db 4.- Show access_db'))
+    start.start_program()
+    
