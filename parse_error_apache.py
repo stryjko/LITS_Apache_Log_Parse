@@ -23,10 +23,11 @@ class ApacheLogParser():
 
             self.res_dict = {
                 'date': re.findall(DATA_RE, line.strip())[0],
-                'type_message': re.findall(DATA_RE, line.strip())[1] 
+                'message_type': re.findall(DATA_RE, line.strip())[1] 
                 if len(re.findall(DATA_RE, line.strip())) > 1 else re.findall(TYPE_MESSAGE_RE, line.strip()),
                 'ip': re.findall(DATA_RE, line.strip())[2].replace('client', '').strip() 
                 if len(re.findall(DATA_RE, line.strip())) > 2 else None,
-                'message': re.findall(MESSAGE_RE, line.strip())[0]
+                'message': re.findall(MESSAGE_RE, line.strip())[0],
+                'error_id':'104'
             }
             self.lst.append(self.res_dict)
