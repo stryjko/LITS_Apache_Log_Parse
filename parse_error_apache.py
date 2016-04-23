@@ -13,12 +13,6 @@ class ApacheLogParser():
         self.res_dict = {}
         self.lst = []
 
-    def main(self, file_type):
-        if file_type == '/home/stryjko/Downloads/error_log':
-            self.parse_data_from_error_file(file_type)
-        else:
-            self.parse_data_from_access_file(file_type)
-
     def parse_data_from_error_file(self, file_name):
         # read data from file
         with open(file_name) as f:
@@ -36,10 +30,3 @@ class ApacheLogParser():
                 'message': re.findall(MESSAGE_RE, line.strip())[0]
             }
             self.lst.append(self.res_dict)
-        print self.lst
-
-    def parse_data_from_access_file(self, file_name):
-    	pass
-
-if __name__ == "__main__":
-    ApacheLogParser().main('/home/stryjko/Downloads/error_log')
