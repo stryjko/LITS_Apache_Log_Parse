@@ -6,6 +6,7 @@ from mysql.connector import Error
 import parse_error_apache
 import sys
 from os import system
+from time import sleep
 
 
 class ApacheDB(object):
@@ -16,17 +17,22 @@ class ApacheDB(object):
                              'password':'1511256515',
                              'host':'127.0.0.1',
                              'database':'apache_log'}
+
         self.apache_conn = mysql.connector.connect(**self.mysql_config)
         self.apache_cur = self.apache_conn.cursor()
+
+        self.errors = []
 
     def start_program(self):
         system('clear')
         print """ --- Apache logs parser --- \n
-1. Add error log to DB
-2. Add access log to DB
-3. View error log
-4. View access log\n
-9. Exit"""
+  1. Add error log to DB
+  2. Add access log to DB
+  3. View error log
+  4. View access log\n
+  5. Delete all data from error log
+  6. Delete all data from access log\n
+  9. Exit\n"""
 
         choice = str(raw_input('Enter your choice: '))
 
@@ -35,10 +41,17 @@ class ApacheDB(object):
         elif choice == '2':
             self.give_access_data()
         elif choice == '3':
-            pass
+            self.select_all('error')
         elif choice == '4':
             pass
+        elif choice == '5':
+            self.delete_data('error')
+        elif choice == '6':
+            pass
         elif choice == '9':
+            system('clear')
+            print 'Bye'
+            sleep(2)
             sys.exit()
 
         
@@ -52,6 +65,9 @@ class ApacheDB(object):
         pass
 
     def insert_error_lst(self, data):
+
+        self.apache_conn = mysql.connector.connect(**self.mysql_config)
+        self.apache_cur = self.apache_conn.cursor()
 
         for item in data:
             dt = item['date']
@@ -69,14 +85,85 @@ class ApacheDB(object):
                 self.apache_conn.commit()
 
             except Error as error:
+                self.errors.append(error)
+        if self.errors:
+            system('clear')
+            print 'We have there some errors: \n'
+            for error in self.errors:
                 print error
+                print '\n'
+            choice = str(raw_input('Continue? (yes/no): '))
+            if choice == 'yes':
+                self.start_program()
+            elif choice == 'no':
+                print 'Bye!'
+                sleep(2)
+                sys.exit()
             
         self.apache_cur.close()
         self.apache_conn.close()
+        system('clear')
+        print 'Data added!'
+        sleep(2)
+        self.start_program()
 
     def insert_access_lst(self, data):
         pass
+
+    def select_all(self, table):
+
+        self.apache_conn = mysql.connector.connect(**self.mysql_config)
+        self.apache_cur = self.apache_conn.cursor()
+
+        if table == 'error':
+            sql = """SELECT * FROM error_log """
+        elif table == 'access':
+            sql = """SELECT * FROM access_log """
+
+        self.apache_cur.execute(sql)
+        rows = self.apache_cur.fetchall()
+        sys.stdout.write("\x1b[8;25;120t") #resize terminal
+
+        for row in rows:
+            a = '| ' + row[0] + ' | ' + row[1] + ' | ' + row[2] \
+                 + ' | ' + row[3] + ' | ' + row[4] + ' |'
             
+            print a
+            print '-'*len(a)
+        self.apache_cur.close()
+        self.apache_conn.close()
+        choice = str(raw_input('Open menu? (yes/no): '))
+        if choice == 'yes':
+            self.start_program()
+        elif choice == 'no':
+            sys.exit()
+
+
+    def delete_data(self, table):
+
+        self.apache_conn = mysql.connector.connect(**self.mysql_config)
+        self.apache_cur = self.apache_conn.cursor()
+
+        if table == 'error':
+            sql = """TRUNCATE error_log"""
+        elif table == 'access':
+            sql = """TRUNCATE access_log"""
+
+        choice = str(raw_input('Are you sure? (yes/no)'))
+        if choice == 'yes':
+            self.apache_cur.execute(sql)
+            self.apache_conn.commit()
+            self.apache_cur.close()
+            self.apache_conn.close()
+            system('clear')
+            print 'Data deleted!'
+            sleep(2)
+            self.start_program()
+        else:
+            system('clear')
+            self.start_program()
+
+
 
 
 if __name__ == '__main__':
