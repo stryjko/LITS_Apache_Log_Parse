@@ -20,9 +20,6 @@ class ApacheDB(object):
                              'host':'127.0.0.1',
                              'database':'apache_log'}
 
-        self.apache_conn = mysql.connector.connect(**self.mysql_config)
-        self.apache_cur = self.apache_conn.cursor()
-
         self.errors = []
 
     def start_program(self):
@@ -45,11 +42,11 @@ class ApacheDB(object):
         elif choice == '3':
             self.select_all('error')
         elif choice == '4':
-            pass
+            self.select_all('access')
         elif choice == '5':
             self.delete_data('error')
         elif choice == '6':
-            pass
+            self.delete_data('access')
         elif choice == '9':
             system('clear')
             print 'Bye'
@@ -64,7 +61,10 @@ class ApacheDB(object):
         self.insert_error_lst(data)
 
     def give_access_data(self):
-        pass
+        parse_acces = parse_error_apache.ApacheLogParser()
+        parse_acces.parse_data_from_error_file('access_log')
+        data = parse_acces.lst
+        self.insert_access_lst(data)
 
     def insert_error_lst(self, data):
 
@@ -73,15 +73,76 @@ class ApacheDB(object):
 
         for item in data:
             dt = item['date']
-            msg_t = item['message_type']
             ip = item['ip']
             e_id = item['error_id']
-            msg = item['message']
 
-            sql = """INSERT INTO error_log (date, message_type, ip, 
-                  error_id, message) VALUES ('%s', '%s', '%s', '%s', '%s')""" \
-                  % (dt, msg_t, ip, e_id, msg)
+            if type(item['message']) == list:
+                msg = item['message']
+                print 'list'
+            else:
+                print 'str'
+                msg = []
+                msg.append(item['message'])
+            print msg
+
+            if item['message_type'] == ['statistics']:
+                msg_t = item['message_type'][0]
+            else:
+                msg_t = item['message_type']
+
+            sql = """INSERT INTO error_log (date, message_type, 
+                  ip, error_id, message) VALUES ('%s', '%s', 
+                  '%s', '%s', '%s')""" % (dt, msg_t, ip, e_id, msg[0])
             
+            try:
+                self.apache_cur.execute(sql)
+                self.apache_conn.commit()
+
+            except Error as error:
+                self.errors.append(error)
+
+        if self.errors:
+            #system('clear')
+            print 'We have there some errors: \n'
+
+            for error in self.errors:
+                print error, '\n'
+
+            choice = str(raw_input('Continue? (yes/no): '))
+
+            if choice == 'yes':
+                self.start_program()
+            elif choice == 'no':
+                print 'Bye!'
+                sleep(2)
+                sys.exit()
+    
+        self.apache_cur.close()
+        self.apache_conn.close()
+        system('clear')
+        print 'Data added!'
+        sleep(2)
+        self.start_program()
+
+    def insert_access_lst(self, data):
+
+        self.apache_conn = mysql.connector.connect(**self.mysql_config)
+        self.apache_cur = self.apache_conn.cursor()
+
+        for item in data:
+            hp = item['http_port']
+            ip = item['ip']
+            hrp = item['http_request_protocol']
+            hru = item['http_request_url']
+            dt = item['date']
+            hrt = item['http_request_type']
+            hr = item['http_response']
+
+            sql = """INSERT INTO access_log (date, ip, http_port, 
+                    http_request_type, http_request_protocol,
+                    http_request_url, http_response) VALUES ('%s', 
+                    '%s', '%s', '%s', '%s', '%s', '%s')""" \
+                    % (dt, ip, hp, hrt, hrp, hru, hr)
             try:
                 self.apache_cur.execute(sql)
                 self.apache_conn.commit()
@@ -94,8 +155,7 @@ class ApacheDB(object):
             print 'We have there some errors: \n'
 
             for error in self.errors:
-                print error
-                print '\n'
+                print error, '\n'
 
             choice = str(raw_input('Continue? (yes/no): '))
 
@@ -113,8 +173,6 @@ class ApacheDB(object):
         sleep(2)
         self.start_program()
 
-    def insert_access_lst(self, data):
-        pass
 
     def select_all(self, table):
 
@@ -138,6 +196,7 @@ class ApacheDB(object):
 
         self.apache_cur.close()
         self.apache_conn.close()
+
         choice = str(raw_input('Open menu? (yes/no): '))
 
         if choice == 'yes':
