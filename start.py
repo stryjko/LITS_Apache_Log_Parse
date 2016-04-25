@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+__author__ = 'Yuriy K.'
+
 import mysql.connector
 from mysql.connector import Error
 import parse_error_apache
@@ -86,13 +88,17 @@ class ApacheDB(object):
 
             except Error as error:
                 self.errors.append(error)
+
         if self.errors:
             system('clear')
             print 'We have there some errors: \n'
+
             for error in self.errors:
                 print error
                 print '\n'
+
             choice = str(raw_input('Continue? (yes/no): '))
+
             if choice == 'yes':
                 self.start_program()
             elif choice == 'no':
@@ -127,12 +133,13 @@ class ApacheDB(object):
         for row in rows:
             a = '| ' + row[0] + ' | ' + row[1] + ' | ' + row[2] \
                  + ' | ' + row[3] + ' | ' + row[4] + ' |'
-            
             print a
             print '-'*len(a)
+
         self.apache_cur.close()
         self.apache_conn.close()
         choice = str(raw_input('Open menu? (yes/no): '))
+
         if choice == 'yes':
             self.start_program()
         elif choice == 'no':
